@@ -1,0 +1,16 @@
+[project]
+name = "hugging-face"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fasta2a>=0.5.0",
+    "fastapi>=0.118.0",
+    "httpx>=0.28.1",
+    "logfire[system-metrics]>=4.11.0",
+    "pydantic-ai>=1.0.15",
+    "pydantic-settings>=2.11.0",
+    "python-jose>=3.5.0",
+    "redis>=6.4.0",
+]

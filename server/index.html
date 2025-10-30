@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Chat Interface</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(79, 172, 254, 0.1), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 180, 216, 0.1), transparent 50%);
+      pointer-events: none;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      background: rgba(26, 32, 53, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(79, 172, 254, 0.1);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(0, 180, 216, 0.15) 100%);
+      padding: 28px 32px;
+      border-bottom: 1px solid rgba(79, 172, 254, 0.15);
+      position: relative;
+    }
+    
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(79, 172, 254, 0.5), transparent);
+    }
+    
+    h1 {
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #ffffff, #4facfe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px;
+      border-radius: 24px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      transition: all 0.3s ease;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .status-indicator::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: inherit;
+      filter: blur(8px);
+      opacity: 0.6;
+    }
+    
+    .status-connected {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-connected .status-indicator {
+      background: #10b981;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+    }
+    
+    .status-disconnected {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .status-disconnected .status-indicator {
+      background: #ef4444;
+    }
+    
+    .connection-panel {
+      padding: 32px;
+      background: rgba(15, 20, 35, 0.6);
+      border-bottom: 1px solid rgba(79, 172, 254, 0.1);
+    }
+    
+    .input-group {
+      margin-bottom: 24px;
+    }
+    
+    label {
+      display: block;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 18px;
+      background: rgba(15, 20, 35, 0.8);
+      border: 2px solid rgba(79, 172, 254, 0.2);
+      border-radius: 12px;
+      color: #e2e8f0;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+    
+    input[type="text"]:focus {
+      border-color: #4facfe;
+      box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1), 0 0 20px rgba(79, 172, 254, 0.2);
+      background: rgba(15, 20, 35, 0.95);
+    }
+    
+    input[type="text"]::placeholder {
+      color: rgba(148, 163, 184, 0.4);
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 14px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    button:hover:not(:disabled)::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .btn-connect {
+      background: linear-gradient(135deg, #4facfe 0%, #00b4d8 100%);
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(79, 172, 254, 0.3);
+    }
+    
+    .btn-connect:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(79, 172, 254, 0.5);
+    }
+    
+    .btn-disconnect {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-disconnect:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(239, 68, 68, 0.5);
+    }
+    
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    
+    #messages {
+      height: 600px;
+      overflow-y: auto;
+      padding: 28px;
+      background: rgba(10, 15, 28, 0.4);
+      scroll-behavior: smooth;
+    }
+    
+    #messages::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    #messages::-webkit-scrollbar-track {
+      background: rgba(15, 20, 35, 0.5);
+      border-radius: 10px;
+    }
+    
+    #messages::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #4facfe, #00b4d8);
+      border-radius: 10px;
+      transition: background 0.3s ease;
+    }
+    
+    #messages::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #6bc1ff, #00d4ff);
+    }
+    
+    .message {
+      padding: 16px 20px 16px 52px;
+      margin-bottom: 14px;
+      border-radius: 12px;
+      color: #e2e8f0;
+      font-size: 14px;
+      line-height: 1.7;
+      animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      border-left: 3px solid transparent;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+    
+    .message:hover {
+      transform: translateX(4px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 11px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+    }
+    
+    .status-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .agent-name {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 10px;
+      margin-left: 8px;
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .message-time {
+      color: #94a3b8;
+    }
+    
+    .message.system {
+      background: rgba(79, 172, 254, 0.1);
+      border-left-color: #4facfe;
+      color: #bae6fd;
+    }
+    
+    .message.assigned {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1));
+      border-left-color: #3b82f6;
+      color: #93c5fd;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .message.assigned::before {
+      content: '🎯';
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: translateY(-50%) scale(1); opacity: 1; }
+      50% { transform: translateY(-50%) scale(1.1); opacity: 0.8; }
+    }
+    
+    .message.thinking {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+      border-left-color: #fbbf24;
+      color: #fde68a;
+      box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+    
+    .message.thinking::before {
+      content: '🧠';
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      animation: thinking 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes thinking {
+      0%, 100% { transform: translateY(-50%) rotate(0deg); }
+      25% { transform: translateY(-50%) rotate(-10deg); }
+      75% { transform: translateY(-50%) rotate(10deg); }
+    }
+    
+    .message.response {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(124, 58, 237, 0.1));
+      border-left-color: #8b5cf6;
+      color: #e9d5ff;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    
+    .message.response::before {
+      content: '💬';
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(-50%); }
+      50% { transform: translateY(-60%); }
+    }
+    
+    .message.completed {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
+      border-left-color: #22c55e;
+      color: #86efac;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    
+    .message.completed::before {
+      content: '✅';
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      animation: checkmark 0.5s ease-in-out;
+    }
+    
+    @keyframes checkmark {
+      0% { transform: translateY(-50%) scale(0); }
+      50% { transform: translateY(-50%) scale(1.2); }
+      100% { transform: translateY(-50%) scale(1); }
+    }
+    
+    .message.user {
+      background: rgba(168, 85, 247, 0.1);
+      border-left-color: #a855f7;
+      color: #e9d5ff;
+      margin-left: 40px;
+      box-shadow: 0 4px 15px rgba(168, 85, 247, 0.2);
+      padding-left: 20px;
+    }
+    
+    .message.user::before {
+      display: none;
+    }
+    
+    .message.received {
+      background: rgba(59, 130, 246, 0.1);
+      border-left-color: #3b82f6;
+      color: #bfdbfe;
+      padding-left: 20px;
+    }
+    
+    .message.received::before {
+      display: none;
+    }
+    
+    .message.system {
+      padding-left: 20px;
+    }
+    
+    .message.system::before {
+      display: none;
+    }
+    
+    .message.unauthorized {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+      border-left-color: #ef4444;
+      color: #fca5a5;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    
+    .message.unauthorized::before {
+      content: '🚫';
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateY(-50%) translateX(0); }
+      25% { transform: translateY(-50%) translateX(-5px); }
+      75% { transform: translateY(-50%) translateX(5px); }
+    }
+    
+    .message.error {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+      border-left-color: #dc2626;
+      color: #fecaca;
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+    
+    .message.error::before {
+      content: '⚠️';
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    
+    .message pre {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 16px;
+      border-radius: 10px;
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid rgba(79, 172, 254, 0.2);
+    }
+    
+    .message code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      border: 1px solid rgba(79, 172, 254, 0.15);
+    }
+    
+    .message pre code {
+      background: none;
+      padding: 0;
+      border: none;
+    }
+    
+    .message h1, .message h2, .message h3 {
+      margin: 14px 0 10px 0;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    .message h1 { font-size: 22px; }
+    .message h2 { font-size: 19px; }
+    .message h3 { font-size: 17px; }
+    
+    .message ul, .message ol {
+      margin: 10px 0;
+      padding-left: 28px;
+    }
+    
+    .message li {
+      margin: 6px 0;
+    }
+    
+    .message blockquote {
+      border-left: 3px solid rgba(79, 172, 254, 0.4);
+      padding-left: 16px;
+      margin: 12px 0;
+      font-style: italic;
+      opacity: 0.9;
+    }
+    
+    .message a {
+      color: #60a5fa;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .message a:hover {
+      color: #93c5fd;
+      border-bottom-color: #93c5fd;
+    }
+    
+    .message strong {
+      font-weight: 700;
+      color: #ffffff;
+    }
+    
+    .message em {
+      font-style: italic;
+      color: #cbd5e1;
+    }
+    
+    .message hr {
+      border: none;
+      border-top: 1px solid rgba(79, 172, 254, 0.2);
+      margin: 16px 0;
+    }
+    
+    .message table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    
+    .message th, .message td {
+      padding: 10px;
+      border: 1px solid rgba(79, 172, 254, 0.2);
+      text-align: left;
+    }
+    
+    .message th {
+      background: rgba(79, 172, 254, 0.1);
+      font-weight: 600;
+    }
+    
+    .input-panel {
+      padding: 28px 32px;
+      background: rgba(15, 20, 35, 0.6);
+      border-top: 1px solid rgba(79, 172, 254, 0.1);
+    }
+    
+    .message-input-group {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+    
+    #inputMessage {
+      flex: 1;
+    }
+    
+    .btn-send {
+      flex: 0 0 auto;
+      width: 130px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-send:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(16, 185, 129, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Agent Chat Interface</h1>
+      <div class="status-container">
+        <div id="statusBadge" class="status-badge status-disconnected">
+          <div class="status-indicator"></div>
+          <span>Disconnected</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="connection-panel">
+      <div class="input-group">
+        <label>Access Token</label>
+        <input type="text" id="token" placeholder="Enter your access token">
+      </div>
+      <div class="input-group">
+        <label>Session ID</label>
+        <input type="text" id="sessionId" placeholder="Enter your session ID">
+      </div>
+      <div class="button-group">
+        <button id="connectBtn" class="btn-connect">Connect</button>
+        <button id="disconnectBtn" class="btn-disconnect" disabled>Disconnect</button>
+      </div>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div class="input-panel">
+      <div class="message-input-group">
+        <input type="text" id="inputMessage" placeholder="Type your message..." disabled>
+        <button id="sendBtn" class="btn-send" disabled>Send</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script>
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+      headerIds: false,
+      mangle: false
+    });
+    
+    let ws;
+    const messages = document.getElementById("messages");
+    const statusBadge = document.getElementById("statusBadge");
+    const connectBtn = document.getElementById("connectBtn");
+    const disconnectBtn = document.getElementById("disconnectBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const inputMessage = document.getElementById("inputMessage");
+    
+    function updateConnectionStatus(status) {
+      if (status === 'connected') {
+        statusBadge.innerHTML = `
+          <div class="status-indicator"></div>
+          <span>Connected</span>
+        `;
+        statusBadge.className = 'status-badge status-connected';
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+        sendBtn.disabled = false;
+        inputMessage.disabled = false;
+      } else if (status === 'disconnected') {
+        statusBadge.innerHTML = `
+          <div class="status-indicator"></div>
+          <span>Disconnected</span>
+        `;
+        statusBadge.className = 'status-badge status-disconnected';
+        connectBtn.disabled = false;
+        disconnectBtn.disabled = true;
+        sendBtn.disabled = true;
+        inputMessage.disabled = true;
+      }
+    }
+    
+    function formatTime(ms) {
+      if (ms < 1000) return `${ms.toFixed(0)}ms`;
+      return `${(ms / 1000).toFixed(2)}s`;
+    }
+    
+    connectBtn.addEventListener("click", () => {
+      const token = document.getElementById("token").value.trim();
+      const sessionId = document.getElementById("sessionId").value.trim();
+      
+      if (!token) {
+        alert("Please enter an access token");
+        return;
+      }
+      
+      if (!sessionId) {
+        alert("Please enter a session ID");
+        return;
+      }
+      
+      ws = new WebSocket(`ws://localhost:8000/ws/chat?token=${token}&session_id=${sessionId}`);
+      
+      ws.onopen = () => {
+        appendMessage("Connected to Agent Chat Interface", "system");
+        updateConnectionStatus('connected');
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.status === "unauthorized") {
+            appendMessage(data.message, "unauthorized");
+          } else if (data.status === "error") {
+            appendMessage(data.message, "error");
+          } else if (data.status === "assigned") {
+            // Extract agent name from message (e.g., "Task assigned to orchestrator agent")
+            const agentMatch = data.message.match(/Task assigned to (\w+) agent/);
+            const agentName = agentMatch ? agentMatch[1] : 'unknown';
+            appendMessage(data.message, "assigned", "", agentName);
+          } else if (data.status === "completed" && data.type === "thinking") {
+            const timeInfo = data.time_taken ? ` (${formatTime(data.time_taken)})` : '';
+            appendMessage(data.agent_response, "thinking", timeInfo);
+          } else if (data.status === "completed" && data.type === "response") {
+            const timeInfo = data.time_taken ? ` (${formatTime(data.time_taken)})` : '';
+            appendMessage(data.agent_response, "response", timeInfo);
+          } else if (data.status === "completed") {
+            const timeInfo = data.time_taken ? ` (${formatTime(data.time_taken)})` : '';
+            appendMessage(data.message || data.agent_response || "Task completed", "completed", timeInfo);
+          } else {
+            appendMessage(event.data, "received");
+          }
+        } catch (e) {
+          appendMessage(event.data, "received");
+        }
+      };
+      
+      ws.onclose = () => {
+        appendMessage("Disconnected from Agent Chat Interface", "system");
+        updateConnectionStatus('disconnected');
+      };
+      
+      ws.onerror = (err) => {
+        console.error("WebSocket error:", err);
+        appendMessage("Connection error occurred", "system");
+      };
+    });
+    
+    disconnectBtn.addEventListener("click", () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    });
+    
+    sendBtn.addEventListener("click", sendMessage);
+    
+    inputMessage.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+    
+    function sendMessage() {
+      const msg = inputMessage.value.trim();
+      if (msg && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(msg);
+        appendMessage(msg, "user");
+        inputMessage.value = "";
+      }
+    }
+    
+    function appendMessage(msg, type = "system", timeInfo = "", agentName = "") {
+      const div = document.createElement("div");
+      div.className = `message ${type}`;
+      
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+      
+      const headerDiv = document.createElement("div");
+      headerDiv.className = "message-header";
+      
+      let statusLabel = type.toUpperCase();
+      let agentBadge = '';
+      
+      if (agentName) {
+        agentBadge = `<span class="agent-name">${agentName}</span>`;
+      }
+      
+      headerDiv.innerHTML = `
+        <div>
+          <span class="status-type">${statusLabel}${agentBadge}</span>
+        </div>
+        <span class="message-time">${timeStr}${timeInfo}</span>
+      `;
+      
+      const contentDiv = document.createElement("div");
+      
+      if (type === "response" || type === "received" || type === "thinking") {
+        contentDiv.innerHTML = marked.parse(msg);
+      } else {
+        contentDiv.textContent = msg;
+      }
+      
+      div.appendChild(headerDiv);
+      div.appendChild(contentDiv);
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+  </script>
+</body>
+</html>
